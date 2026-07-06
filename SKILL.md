@@ -1,6 +1,6 @@
 ---
 name: dokploy-cli
-description: Knowledge of the Dokploy CLI (@dokploy/cli, github.com/Dokploy/cli) for remotely managing a Dokploy server — deploying apps/compose stacks, managing databases (postgres/mysql/mariadb/mongo/redis), domains, backups, and server settings from the terminal. Use this whenever the user asks about installing, authenticating, or running the `dokploy` command; wants to know what command groups/actions exist; or wants to write, debug, or automate shell scripts that call `dokploy` (e.g. CI/CD deploy scripts, cron backup jobs, bulk operations across projects). Trigger even if they just say "dokploy" or paste a `dokploy ...` command with an error. Do NOT use for the Dokploy web panel, its HTTP API directly, or the separate Dokploy MCP server — this skill is specifically the CLI tool.
+description: Knowledge and safe-usage policy for the Dokploy CLI (@dokploy/cli, github.com/Dokploy/cli) for remotely managing a Dokploy server — deploying apps/compose stacks, managing databases (postgres/mysql/mariadb/mongo/redis), domains, backups, and server settings from the terminal. Carries a safety policy: prefer the CLI over the raw HTTP API, get explicit user approval before any mutating operation (create/delete/deploy/restart/stop/rollback/etc.), treat read-only output as sensitive, and never print secrets. Use this whenever the user asks about installing, authenticating, or running the `dokploy` command; wants to know what command groups/actions exist; or wants to write, debug, or automate shell scripts that call `dokploy` (e.g. CI/CD deploy scripts, cron backup jobs, bulk operations across projects). Trigger even if they just say "dokploy" or paste a `dokploy ...` command with an error. Do NOT use for the Dokploy web panel, its HTTP API directly, or the separate Dokploy MCP server — this skill is specifically the CLI tool.
 ---
 
 # Dokploy CLI
@@ -15,6 +15,16 @@ Individual flag _value formats_ (e.g. exact enum strings, comma- vs repeat-flag 
 ## What it is
 
 A Node.js CLI that manages a **remote, already-running** Dokploy server over its HTTP API — it does not install Dokploy locally. 449 commands across 43 groups, auto-generated from Dokploy's OpenAPI spec, structured as `dokploy <group> <action> [--flags]`.
+
+## Safety policy
+
+This skill is a **behavioral policy** for an agent driving the real `dokploy` CLI — it is not an enforcement layer. It relies on the agent following these rules, so treat them as binding, not advisory. (For hard enforcement you'd need something out of band — e.g. the API key held only by a broker the agent can't bypass — which is out of scope here.)
+
+- **Prefer the CLI.** Use `dokploy` for Dokploy work whenever it's installed and can satisfy the request. Only reach for direct HTTP API calls when the CLI genuinely can't do it — and get explicit user approval first, stating why.
+- **Gate every mutating operation behind explicit user approval.** Treat as mutating any action whose intent is to create, update, delete, remove, deploy, redeploy, restart, stop, cancel, rollback, restore, reset, enable, disable, assign, revoke, rotate, or otherwise change server/config/credential/permission state. Do not run it until the user approves *that specific target and action*. If approval is vague, restate the exact command you intend to run and wait for a clear yes.
+- **Read-only is not the same as non-sensitive.** List/get/`--json` output can still expose project names, domains, service topology, users, environment names, IDs, and deployment history. Only pull live data the user actually asked for; summarize sensitive output rather than pasting it wholesale.
+- **Never print secrets.** Do not echo tokens, `DOKPLOY_API_KEY`/`DOKPLOY_AUTH_TOKEN`/`DOKPLOY_URL` values, bearer/session strings, private URLs, or the contents of local config/`.env`/auth files into chat, docs, logs, or examples. Redact anything token-looking. Keep examples public-safe with placeholders only.
+- **Discover safely.** `command -v dokploy`, `dokploy --help`, `dokploy <group> --help`, and `dokploy --version` don't touch live server data — use them freely to confirm the CLI and find commands before running anything that hits the server.
 
 ## Installation
 
